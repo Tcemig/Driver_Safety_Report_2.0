@@ -4,6 +4,8 @@
 # venv files
 .venv/
 
+temp_json_files/
+
 # Windows system files
 Thumbs.db
 Desktop.ini
