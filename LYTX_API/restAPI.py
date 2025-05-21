@@ -1,98 +1,147 @@
-import pandas as pd
-from suds.client import Client
+import http.client
+import json
 import os
+import math
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SOAPUI_LYTX_USERNAME = os.getenv('SOAPUI_LYTX_USERNAME')
-SOAPUI_LYTX_PASSWORD = os.getenv('SOAPUI_LYTX_PASSWORD')
+LYTX_API_KEY = os.getenv('LYTX_API_KEY')
+LYTX_HTTP_CONNECTION = os.getenv('LYTX_HTTP_CONNECTION')
 
+def pull_LYTX_eventsWithMetadata(date_str, keys_to_include):
 
-def LYTX_Login_SOAPUI():
-        LYTX_Login_URL = "https://services-sd05.drivecam.com/HSServicesAPI/AuthenticationService/V1/AuthenticationService.svc?WSDL"
-        LYTX_Login_Client = Client(LYTX_Login_URL)
-        login_request = LYTX_Login_Client.factory.create('ns2:LoginRequest')
-        login_request.Username = SOAPUI_LYTX_USERNAME
-        login_request.Password = SOAPUI_LYTX_PASSWORD
-        login_response = LYTX_Login_Client.service.Login(login_request)
-        return(login_response)
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    return_limit = 1000
+    conn.request(
+        "GET",
+        f"""/video/safety/eventsWithMetadata?limit={return_limit}&includeSubgroups=true&sortBy=lastUpdatedDate&sortDirection=desc&dateOption=lastUpdatedDate&to={date_str}T23%3A59%3A59.00Z&from={date_str}T00%3A00%3A00.00Z""",
+        headers=headers
+    )
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
 
-def LYTX_GetIndividualVehicle_SOUPUI(vehicleId, login_response):
-        LYTX_GetIndividualVehicle_URL = "https://services-sd05.drivecam.com/HSServicesAPI/VehicleService/V1/VehicleService.svc?WSDL"
-        LYTX_GetIndividualVehicle_Client = Client(LYTX_GetIndividualVehicle_URL)
-        GetIndividualVehicle_request = LYTX_GetIndividualVehicle_Client.factory.create('ns2:GetVehicleRequest')
-        GetIndividualVehicle_request.SessionId = login_response.SessionId
-        GetIndividualVehicle_request.GroupId = login_response.HomeGroupId
-        GetIndividualVehicle_request.VehicleId = vehicleId
-        GetIndividualVehicle_response = LYTX_GetIndividualVehicle_Client.service.GetVehicle(GetIndividualVehicle_request)
-        return(GetIndividualVehicle_response)
+    # Process the data
+    processed_data = []
+    for item in data:
+        new_item = {}
+        for key in keys_to_include:
+            if isinstance(key, tuple):  # Nested key
+                temp_list = item[key[0]]
+                if len(temp_list) == 1:
+                    new_item[f"{key[0]}{key[-1].title()}"] = temp_list[0][key[-1]]
+                else:
+                    new_item[f"{key[0]}{key[-1].title()}"] = ""
+            else:  # Direct key
+                new_item[key] = item[key]
+        processed_data.append(new_item)
 
-def LYTX_GetUsers_SOUPUI(login_response):
-    LYTX_GetUsers_URL = "https://services-sd05.drivecam.com/HSServicesAPI/UserService/V1/UserService.svc?WSDL"
-    LYTX_GetUsers_Client = Client(LYTX_GetUsers_URL)
-    GetUsers_request = LYTX_GetUsers_Client.factory.create('ns2:GetUsersRequest')
-    GetUsers_request.SessionId = login_response.SessionId
-    # GetUsers_request.GroupId = login_response.HomeGroupId
-    GetUsers_request.GroupId = "5100ffff-60b6-e5cd-0e05-60a3e15b0000" # DIO Group Id
-    GetUsers_request.IncludeSubGroups = 1
-    GetUsers_response = LYTX_GetUsers_Client.service.GetUsers(GetUsers_request)
-    return(GetUsers_response)
+    return processed_data
 
-def LYTX_GetUsers_fromGroup_SOUPUI(login_response, groupId):
-    LYTX_GetUsers_URL = "https://services-sd05.drivecam.com/HSServicesAPI/UserService/V1/UserService.svc?WSDL"
-    LYTX_GetUsers_Client = Client(LYTX_GetUsers_URL)
-    GetUsers_request = LYTX_GetUsers_Client.factory.create('ns2:GetUsersRequest')
-    GetUsers_request.SessionId = login_response.SessionId
-    GetUsers_request.GroupId = groupId
-    GetUsers_request.IncludeSubGroups = 0
-    GetUsers_response = LYTX_GetUsers_Client.service.GetUsers(GetUsers_request)
-    return(GetUsers_response)
-
-
-
-
-
-# def pulling_avaliable_LYTX_drivers(procurement_instance, mobile=False):
-#     login_response = LYTX_Login_SOAPUI()
-
-#     if not mobile:
-#         deviceName = procurement_instance.vehicleId
-#     else:
-#         deviceName = procurement_instance
+date_str = '2025-05-20'
+keys_to_include = [
+    'id',  # Direct key
+    'customerEventId',
+    'eventTriggerId',
+    'eventTriggerSubTypeId',
+    'score',
+    'vehicleId',
+    'groupId',
+    'speed',
+    'latitude',
+    'longitude',
+    'driverId',
+    # 'coachId',
+    'driverFirstName',
+    'driverLastName',
     
-#     LytxApi_Vehicles_data = refreshLytxVehicles_database.objects.all()
-#     LytxApi_Vehicles_df = pd.DataFrame.from_records(LytxApi_Vehicles_data.values())
+    ('behaviors', 'id'),  # Nested key path
+    ('behaviors', 'name',),
+    ('behaviors', 'creationDate'),
+]
+return_data = pull_LYTX_eventsWithMetadata(date_str, keys_to_include)
+with open('temp_json_files/lytx_events.json', 'w') as f:
+    json.dump(return_data, f, indent=4)
+skip=1
 
-#     temp_lytxVehicle_instance = LytxApi_Vehicles_df[LytxApi_Vehicles_df.lytxName == deviceName]
-    
-#     temp_lytxVehicle_instance = temp_lytxVehicle_instance.reset_index(drop=True)
+def pull_LYTX_vehicles():
 
-#     temp_lytxVehicleId = temp_lytxVehicle_instance.loc[0, 'lytxVehicleId']
-#     temp_lytxVehcileGroupId = temp_lytxVehicle_instance.loc[0, 'lytxGroupId']
-    
-#     # GetIndividualVehicle_response = LYTX_GetIndividualVehicle_SOUPUI(temp_lytxVehicleId, login_response)
-#     def LYTX_GetUsers_fromGroup_SOUPUI(login_response, groupId):
-#         LYTX_GetUsers_URL = "https://services-sd05.drivecam.com/HSServicesAPI/UserService/V1/UserService.svc?WSDL"
-#         LYTX_GetUsers_Client = Client(LYTX_GetUsers_URL)
-#         GetUsers_request = LYTX_GetUsers_Client.factory.create('ns2:GetUsersRequest')
-#         GetUsers_request.SessionId = login_response.SessionId
-#         GetUsers_request.GroupId = groupId
-#         GetUsers_request.IncludeSubGroups = 0
-#         GetUsers_response = LYTX_GetUsers_Client.service.GetUsers(GetUsers_request)
-#         return(GetUsers_response)
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    return_limit = 1000
+    conn.request("GET", f"/vehicles/all?limit={return_limit}", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
 
-#     GetUsers_response = LYTX_GetUsers_fromGroup_SOUPUI(login_response, temp_lytxVehcileGroupId)
-    
-#     users_list = GetUsers_response.Users.UserSummary
-#     users_dicts = [{k: v for k, v in vars(user).items() if not k.startswith('__')} for user in users_list]
-#     users_df = pd.DataFrame(users_dicts)
-#     users_df = users_df.sort_values('FirstName', ascending=True).reset_index(drop=True)
-#     users_df['FullName'] = users_df['FirstName'].str.strip() + ' ' + users_df['LastName'].str.strip()
-#     users_df = users_df[['FirstName', 'LastName', 'FullName', 'UserId', 'UserName', 'UserStatus']]
+    return data
+# return_data = pull_LYTX_vehicles()
 
-#     users_inGroup = list(users_df['FullName'])
-#     users_inGroup.insert(0, 'Unassigned Driver')
+def pull_LYTX_drivers(date_str):
 
-#     return(users_inGroup)
+    all_trips = []
+    page = 1
+    total_pages = 1
 
+    while page <= total_pages:
+
+        conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+        headers = {
+            'accept': "application/json",
+            'x-apikey': LYTX_API_KEY,
+            'Content-Type': 'application/json'
+            }
+        params = {
+            f"startTime": f"{date_str}T00:00:00.000Z",
+            f"endTime": f"{date_str}T23:59:59.999Z",
+            "pageNumber": page,
+            "pageSize": 1000
+        }
+        body = json.dumps(params)
+        conn.request("POST", f"/driverId/trips", body=body, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        data = json.loads(data.decode("utf-8"))
+
+        # Assuming the trips are in a key called 'items' or similar
+        trips = data.get('results', [])
+        all_trips.extend(trips)
+
+        if page == 1: # calculate total pages on first iteration
+            total_pages = math.ceil(data.get('totalCount')/1000)
+
+        page += 1
+
+    return all_trips
+# return_data = pull_LYTX_drivers('2025-05-16')
+
+def pull_LYTX_groups():
+
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    return_limit = 100
+    conn.request("GET", f"/groups?limit={return_limit}", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
+    data = data['groups']
+
+    return data
+return_data = pull_LYTX_groups()
+with open('temp_json_files/lytx_groups.json', 'w') as f:
+    json.dump(return_data, f, indent=4)
+skip=1
