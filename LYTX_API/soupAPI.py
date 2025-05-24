@@ -42,7 +42,7 @@ def LYTX_GetUsers_SOUPUI(login_response):
     # convert response to json
     user_response = GetUsers_response.Users.UserSummary
     user_dicts = [
-        {k: getattr(user, k, None) for k in ['FirstName', 'LastName', 'UserId']}
+        {k: getattr(user, k, None) for k in ['FirstName', 'LastName', 'UserId', 'UserStatus']}
         for user in user_response
     ]
     return(user_dicts)
@@ -56,15 +56,6 @@ def LYTX_GetUsers_fromGroup_SOUPUI(login_response, groupId):
     GetUsers_request.IncludeSubGroups = 0
     GetUsers_response = LYTX_GetUsers_Client.service.GetUsers(GetUsers_request)
     return(GetUsers_response)
-
-
-login_response = LYTX_Login_SOAPUI()
-user_response = LYTX_GetUsers_SOUPUI(login_response)
-
-with open('temp_json_files/lytx_users.json', 'w') as f:
-    json.dump(user_response, f, indent=4)
-
-skip=1
 
 
 # def pulling_avaliable_LYTX_drivers(procurement_instance, mobile=False):

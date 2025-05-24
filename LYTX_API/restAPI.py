@@ -3,13 +3,25 @@ import json
 import os
 import math
 from dotenv import load_dotenv
+from datetime import datetime
+import pytz
 
 load_dotenv()
 
 LYTX_API_KEY = os.getenv('LYTX_API_KEY')
 LYTX_HTTP_CONNECTION = os.getenv('LYTX_HTTP_CONNECTION')
 
+def pst_to_utc(date_str, time_str):
+    pst = pytz.timezone("US/Pacific")
+    dt_pst = datetime.strptime(f"{date_str}T{time_str}", "%Y-%m-%dT%H:%M:%S.%f")
+    dt_pst = pst.localize(dt_pst)
+    dt_utc = dt_pst.astimezone(pytz.utc)
+    return dt_utc.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
 def pull_LYTX_eventsWithMetadata(date_str, keys_to_include):
+
+    from_datetime_str = pst_to_utc(date_str, "00:00:00.000")
+    to_datetime_str = pst_to_utc(date_str, "23:59:59.999")
 
     conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
     headers = {
@@ -19,7 +31,7 @@ def pull_LYTX_eventsWithMetadata(date_str, keys_to_include):
     return_limit = 1000
     conn.request(
         "GET",
-        f"""/video/safety/eventsWithMetadata?limit={return_limit}&includeSubgroups=true&sortBy=lastUpdatedDate&sortDirection=desc&dateOption=lastUpdatedDate&to={date_str}T23%3A59%3A59.00Z&from={date_str}T00%3A00%3A00.00Z""",
+        f"""/video/safety/eventsWithMetadata?limit={return_limit}&includeSubgroups=true&sortBy=lastUpdatedDate&sortDirection=desc&dateOption=recordDate&to={to_datetime_str}&from={from_datetime_str}""",
         headers=headers
     )
     res = conn.getresponse()
@@ -65,10 +77,8 @@ keys_to_include = [
     ('behaviors', 'name',),
     ('behaviors', 'creationDate'),
 ]
-return_data = pull_LYTX_eventsWithMetadata(date_str, keys_to_include)
-with open('temp_json_files/lytx_events.json', 'w') as f:
-    json.dump(return_data, f, indent=4)
-skip=1
+# return_data = pull_LYTX_eventsWithMetadata(date_str, keys_to_include)
+
 
 def pull_LYTX_vehicles():
 
@@ -83,9 +93,11 @@ def pull_LYTX_vehicles():
     data = res.read()
     # data = data.decode("utf-8")
     data = json.loads(data.decode("utf-8"))
+    data = data['vehicles']
 
     return data
 # return_data = pull_LYTX_vehicles()
+
 
 def pull_LYTX_drivers(date_str):
 
@@ -141,7 +153,59 @@ def pull_LYTX_groups():
     data = data['groups']
 
     return data
-return_data = pull_LYTX_groups()
-with open('temp_json_files/lytx_groups.json', 'w') as f:
+# return_data = pull_LYTX_groups()
+
+
+def pull_LYTX_events_triggers():
+
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    conn.request("GET", f"/video/safety/events/triggers", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
+
+
+    return data
+# return_data = pull_LYTX_events_triggers()
+
+def pull_LYTX_events_triggerSubTypes():
+
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    conn.request("GET", f"/video/safety/events/triggersubtypes", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
+
+    return data
+# return_data = pull_LYTX_events_triggerSubTypes()
+
+def pull_LYTX_events_behaviors():
+
+    conn = http.client.HTTPSConnection(LYTX_HTTP_CONNECTION)
+    headers = {
+        'accept': "application/json",
+        'x-apikey': LYTX_API_KEY
+        }
+    conn.request("GET", f"/video/safety/events/behaviors", headers=headers)
+    res = conn.getresponse()
+    data = res.read()
+    # data = data.decode("utf-8")
+    data = json.loads(data.decode("utf-8"))
+
+    return data
+return_data = pull_LYTX_events_behaviors()
+with open('temp_json_files\lytx_events_behaviors.json', 'w') as f:
     json.dump(return_data, f, indent=4)
-skip=1
+
+
+
