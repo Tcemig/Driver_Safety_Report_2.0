@@ -84,7 +84,7 @@ def cleaning_events_data(date_str):
     conn.commit()
     conn.close()
 
-for date in pd.date_range(start='2025-05-01', end='2025-05-20'):
+for date in pd.date_range(start='2024-10-01', end='2025-02-28'):
     cleaning_events_data(date.strftime('%Y-%m-%d'))
     print(f"Data for {date.strftime('%Y-%m-%d')} cleaned and inserted into the database.")
 
