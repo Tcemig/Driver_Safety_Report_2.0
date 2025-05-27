@@ -8,7 +8,7 @@ from chart_data_functions.program.regionalGroupPerformance_tableData import regi
 
 def regionalGroupPerformance_chart(ending_date_str, fig, row_num, col_num):
 
-    regionGroupPerformance_table, regionGroupPerformance_table_colors = regionalGroupPerformance_tableData(ending_date_str)
+    regionGroupPerformance_table, regionGroupPerformance_table_colors = regionalGroupPerformance_tableData(ending_date_str, 3)
 
     cell_values = []
     cell_headers = []
