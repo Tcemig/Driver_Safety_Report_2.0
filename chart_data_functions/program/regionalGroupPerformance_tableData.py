@@ -1,18 +1,12 @@
-from plotly.colors import n_colors
 import pandas as pd
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from chart_plot_functions.functions.table_sequence_color import get_monthly_table_colors
 
-from functions.chart_data_creation import monthlyGroupPreformanceTable_data
-
-def regionalGroupPerformance_tableData(ending_date_str, months_num):
+def regionalGroupPerformance_tableData(regionGroupPerformance_table):
     """
     This function generates the data for the regional group performance table.
     It pulls the last 3 months of data and excludes the Training group.
     """
-    regionGroupPerformance_table = monthlyGroupPreformanceTable_data(ending_date_str, months_num)
     regionGroupPerformance_table = regionGroupPerformance_table[regionGroupPerformance_table['group'] != 'Training']  # Exclude Training group for the chart
     regionGroupPerformance_table = regionGroupPerformance_table[regionGroupPerformance_table['month_label'].isin(regionGroupPerformance_table['month_label'].unique()[-3:])]  # Get the last 3 months of data
     regionGroupPerformance_table['infractions_per_vehicle'] = round(regionGroupPerformance_table['infractions_per_vehicle'], 2)
@@ -25,10 +19,9 @@ def regionalGroupPerformance_tableData(ending_date_str, months_num):
     pivot = regionGroupPerformance_table.pivot(index='group', columns='month_label', values='infractions_per_vehicle').reset_index()
 
     result = pd.merge(pivot, latest_group_size, on='group', how='left')
+    result.insert(1, 'group_size', result.pop('group_size'))  # Move group_size to the second column
 
-    cols = ['group', 'group_size'] + list(last_3_months)
-    regionGroupPerformance_table = result[cols]
-    regionGroupPerformance_table_colors = n_colors('rgb(211,211,211)', 'rgb(47,79,79)', len(regionGroupPerformance_table.columns), colortype='rgb')
+    fill_colors = get_monthly_table_colors(result, last_3_months)
 
-    return regionGroupPerformance_table, regionGroupPerformance_table_colors
+    return result, fill_colors
     

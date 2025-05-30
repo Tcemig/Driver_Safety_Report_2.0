@@ -1,19 +1,30 @@
 import pandas as pd
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+import sqlite3
 
-from functions.chart_data_creation import weeklyInfractionsTotalPerCategory_data
-
-def behavior_sumTrend_chartData(ending_date_str):
+def behavior_sumTrend_chartData(weekly_grouped_data, nonPriority):
     """
     This function generates the data for the behavior sum trend chart.
     It pulls the last 12 weeks of data and excludes the Training group.
     """
-    weekly_total_data, weekly_grouped_data = weeklyInfractionsTotalPerCategory_data(ending_date_str, days_num=200)
     weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['group'] != 'Training']  # Exclude Training group
     weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['behaviorsName'] != '']  # Exclude empty behaviors
-    
+
+    conn = sqlite3.connect('lytx_weekly_reports.db')
+    cursor = conn.cursor()
+    query = """
+        SELECT *
+        FROM nonPriority_behaviors
+    """
+    cursor.execute(query)
+    nonPriorityBehaviors_data = cursor.fetchall()
+    conn.close()
+    nonPriorityBehaviors_data = pd.DataFrame(nonPriorityBehaviors_data, columns=['id', 'category'])
+    nonPriorityBehaviors_list = nonPriorityBehaviors_data['category'].unique().tolist()
+
+    if nonPriority: # if True then exclude non-priority behaviors
+        weekly_grouped_data = weekly_grouped_data.drop(weekly_grouped_data[weekly_grouped_data['behaviorsName'].isin(nonPriorityBehaviors_list)].index)
+    else:  # if False then only include priority behaviors
+        weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['behaviorsName'].isin(nonPriorityBehaviors_list)]
 
     Past12Week_grouped_data = weekly_grouped_data[weekly_grouped_data['week_label'].isin(weekly_grouped_data['week_label'].unique()[-12:])]  # Get the last 12 weeks of data
     Past12Week_grouped_data = Past12Week_grouped_data.groupby(['behaviorsName'], as_index=False).agg({'event_size': 'sum'})

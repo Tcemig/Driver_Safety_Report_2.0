@@ -7,9 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from chart_data_functions.program.nearCollisionBehaviors_chartData import nearCollision_behaviorsTrend_chartData
 
-def nearCollision_behaviorsTrend_chart(ending_date_str, fig, row_num, col_num):
+def nearCollision_behaviorsTrend_chart(weekly_grouped_data, fig, row_num, col_num):
 
-    nearCollision_behaviorsTrend_data, NearCollision_Totals_df_textColors, NearCollision_Totals_df_text = nearCollision_behaviorsTrend_chartData(ending_date_str)
+    nearCollision_behaviorsTrend_data, NearCollision_Totals_df_textColors, NearCollision_Totals_df_text = nearCollision_behaviorsTrend_chartData(weekly_grouped_data)
 
     fig.add_trace(go.Bar(
         x= nearCollision_behaviorsTrend_data['event_size'],

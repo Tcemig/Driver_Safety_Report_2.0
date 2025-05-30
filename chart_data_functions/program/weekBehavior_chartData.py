@@ -1,10 +1,6 @@
 import pandas as pd
 import datetime as dt
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
-from functions.chart_data_creation import weeklyInfractionsTotalPerCategory_data
+import sqlite3
 
 
 def get_7_days_prior(date_str):
@@ -12,14 +8,31 @@ def get_7_days_prior(date_str):
     prior_date = date_obj - dt.timedelta(days=7)
     return prior_date.strftime("%Y-%m-%d")
 
-def oneWeekBehavior_chartData(ending_date_str, days_num, weekDate_str):
+def oneWeekBehavior_chartData(weekly_grouped_data, nonPriority, weekDate_str):
     """
     This function generates the data for the one week behavior chart.
     It pulls the last 1 week of data and excludes the Training group.
     """
-    weekly_total_data, weekly_grouped_data = weeklyInfractionsTotalPerCategory_data(ending_date_str, days_num)
     weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['group'] != 'Training']  # Exclude Training group
     weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['behaviorsName'] != '']  # Exclude empty behaviors
+
+    # used with nonPriority behaviors True False
+    conn = sqlite3.connect('lytx_weekly_reports.db')
+    cursor = conn.cursor()
+    query = """
+        SELECT *
+        FROM nonPriority_behaviors
+    """
+    cursor.execute(query)
+    nonPriorityBehaviors_data = cursor.fetchall()
+    conn.close()
+    nonPriorityBehaviors_data = pd.DataFrame(nonPriorityBehaviors_data, columns=['id', 'category'])
+    nonPriorityBehaviors_list = nonPriorityBehaviors_data['category'].unique().tolist()
+
+    if nonPriority: # if True then exclude non-priority behaviors
+        weekly_grouped_data = weekly_grouped_data.drop(weekly_grouped_data[weekly_grouped_data['behaviorsName'].isin(nonPriorityBehaviors_list)].index)
+    else:  # if False then only include priority behaviors
+        weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['behaviorsName'].isin(nonPriorityBehaviors_list)]
 
     display_weekly_grouped_data = weekly_grouped_data[weekly_grouped_data['week_label'] == weekDate_str]  # Get the last 1 week of data
     display_weekly_grouped_data = display_weekly_grouped_data.groupby(['behaviorsName'], as_index=False).agg({'event_size': 'sum'})

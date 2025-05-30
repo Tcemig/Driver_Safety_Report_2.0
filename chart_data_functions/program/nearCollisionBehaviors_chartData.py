@@ -1,12 +1,7 @@
 import sqlite3
 import pandas as pd
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from functions.chart_data_creation import weeklyInfractionsTotalPerCategory_data
-
-def nearCollision_behaviorsTrend_chartData(ending_date_str):
+def nearCollision_behaviorsTrend_chartData(weekly_grouped_data):
     """
     This function generates the data for the near collision sum trend chart.
     It pulls the last 12 weeks of data and excludes the Training group.
@@ -23,8 +18,6 @@ def nearCollision_behaviorsTrend_chartData(ending_date_str):
     nearCollisionCategories_data = pd.DataFrame(nearCollisionCategories_data, columns=['id', 'category'])
     nearCollisionCategories_list = nearCollisionCategories_data['category'].unique().tolist()
 
-
-    weekly_total_data, weekly_grouped_data = weeklyInfractionsTotalPerCategory_data(ending_date_str, days_num=200)
     Past12Week_grouped_data = weekly_grouped_data[weekly_grouped_data['week_label'].isin(weekly_grouped_data['week_label'].unique()[-12:])]  # Get the last 12 weeks of data
     Past12Week_grouped_data = Past12Week_grouped_data[Past12Week_grouped_data['behaviorsName'].isin(nearCollisionCategories_list)]
     Past12Week_grouped_data = Past12Week_grouped_data.groupby(['behaviorsName'], as_index=False).agg({'event_size': 'sum'})
@@ -64,4 +57,3 @@ def nearCollision_behaviorsTrend_chartData(ending_date_str):
 
     return Past12Week_grouped_data, NearCollision_Totals_df_textColors, NearCollision_Totals_df_text
 
-nearCollision_behaviorsTrend_chartData("2025-05-20")

@@ -7,10 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from chart_data_functions.program.behavior_sumTrend_chartData import behavior_sumTrend_chartData
 
-def behavior_sumTrend_chart(ending_date_str, fig, row_num, col_num):
+def behavior_sumTrend_chart(weekly_grouped_data, fig, nonPriority, row_num, col_num):
 
-    Behaviors_Totals_df, text_labels, text_colors = behavior_sumTrend_chartData(ending_date_str)
-
+    Behaviors_Totals_df, text_labels, text_colors = behavior_sumTrend_chartData(weekly_grouped_data, nonPriority)
     Behaviors_Totals_df = Behaviors_Totals_df.iloc[:20]
     text_labels = text_labels[:20]
     text_colors = text_colors[:20]

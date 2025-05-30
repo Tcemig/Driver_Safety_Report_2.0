@@ -4,13 +4,13 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from functions.table_sequence_color import get_weekly_table_colors
+from chart_plot_functions.functions.table_sequence_color import get_weekly_table_colors
 
 from chart_data_functions.program.covEventsIncidents_tableData import covEventsIncidents_tableData
 
-def covEventsIncidentsMonthly_chart(ending_date_str, fig, row_num, col_num):
+def covEventsIncidentsMonthly_chart(covEI_data, smartSheet_data, fig, row_num, col_num):
 
-    weeklyCovEI, monthlyCovEI = covEventsIncidents_tableData(ending_date_str)
+    weeklyCovEI, monthlyCovEI = covEventsIncidents_tableData(covEI_data, smartSheet_data)
     monthlyCovEI_Color = monthlyCovEI.copy()
 
     fill_colors = get_weekly_table_colors(monthlyCovEI_Color, ['Total VI At Fault', 'Total VI No Fault', 'Total VI Shared Fault'])
@@ -37,13 +37,13 @@ def covEventsIncidentsMonthly_chart(ending_date_str, fig, row_num, col_num):
             font= dict(color='black'),
             ),
     ), row= row_num, col= col_num)
-    fig.update_traces(domain_x=[0.31,0.66], domain_y=[0.76, 0.82], selector=dict(type='table'), row= row_num, col= col_num)
+    fig.update_traces(domain_x=[0.31,0.66], domain_y=[0.76, 0.824], selector=dict(type='table'), row= row_num, col= col_num)
 
     return fig
 
-def covEventsIncidentsWeekly_chart(ending_date_str, fig, row_num, col_num):
+def covEventsIncidentsWeekly_chart(covEI_data, smartSheet_data, fig, row_num, col_num):
 
-    weeklyCovEI, monthlyCovEI = covEventsIncidents_tableData(ending_date_str)
+    weeklyCovEI, monthlyCovEI = covEventsIncidents_tableData(covEI_data, smartSheet_data)
     weeklyCovEI_Color = weeklyCovEI.copy()
 
     cell_values_2 = []
@@ -71,6 +71,6 @@ def covEventsIncidentsWeekly_chart(ending_date_str, fig, row_num, col_num):
             ),
         columnwidth= [120, 100, 100, 100, 100, 100, 100, 100],
     ), row= row_num, col= col_num)
-    fig.update_traces(domain_x=[0.67,1.0], domain_y=[0.76, 0.82], selector=dict(type='table'), row= row_num, col= col_num)
+    fig.update_traces(domain_x=[0.67,1.0], domain_y=[0.76, 0.824], selector=dict(type='table'), row= row_num, col= col_num)
 
     return fig
