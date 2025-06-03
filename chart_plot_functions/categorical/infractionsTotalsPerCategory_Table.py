@@ -13,6 +13,23 @@ def safe_int_str(x):
         return f"{int(float(x))} "
     except (ValueError, TypeError):
         return "0 "
+    
+def week_total_value(weekly_grouped_data, week_label, group):
+    """
+    Calculate the total value for a specific week and group.
+    
+    Args:
+        weekly_grouped_data (DataFrame): The DataFrame containing weekly grouped data.
+        week_label (str): The week label to filter by.
+        group (str): The group to filter by (e.g., 'COV', 'Contractor', 'Linehaul').
+    
+    Returns:
+        int: The total value for the specified week and group.
+    """
+    try:
+        return int(weekly_grouped_data[(weekly_grouped_data['week_label'] == week_label) & (weekly_grouped_data['group'] == group)]['event_size'].sum())
+    except ValueError:
+        return 0
 
 def build_table_section(df_list, columns, weekly_grouped_data):
     cell_values = []
@@ -28,39 +45,72 @@ def build_table_section(df_list, columns, weekly_grouped_data):
             ]
             cell_values.append(date_text)
             cell_headers.append(f"<b>Week</b>")
-        elif cell_v == 'Total':
-
-            temp_cov_total = weekly_grouped_data[weekly_grouped_data['group'] == 'COV'][f'{cell_v}'].sum()
-            temp_contractor_total = weekly_grouped_data[weekly_grouped_data['group'] == 'Contractor'][f'{cell_v}'].sum()
-            temp_linehaul_total = weekly_grouped_data[weekly_grouped_data['group'] == 'Linehaul'][f'{cell_v}'].sum()
-            
-            temp_total = temp_cov_total + temp_contractor_total + temp_linehaul_total
-            
-            interal_temp_all = f"       {temp_total}<br>{temp_cov_total} | {temp_contractor_total} | {temp_linehaul_total}"
-            temp_all.append(interal_temp_all)
-
-            cell_values.append(temp_all)
-            cell_headers.append(f"<b>{cell_v}</b>")
         else:
-            temp_cov = df_list[0][f'{cell_v}'].values if cell_v in df_list[0].columns else ['0 ' for _ in range(len(df_list[0]))]
-            temp_cov = [safe_int_str(x) for x in temp_cov]
-            # temp_cov = ['0 ' if str(x).strip().lower() == 'nan' or (isinstance(x, float) and math.isnan(x)) else x for x in temp_cov]
 
-            temp_contractor = df_list[1][f'{cell_v}'].values if cell_v in df_list[1].columns else ['0 ' for _ in range(len(df_list[0]))]
-            temp_contractor = [safe_int_str(x) for x in temp_contractor]
-            # temp_contractor = ['0 ' if str(x).strip().lower() == 'nan' or (isinstance(x, float) and math.isnan(x)) else x for x in temp_contractor]
+            if cell_v == 'Total':
+                week_series = pd.to_datetime(df_list[0]['week_label']).values
+                temp_cov = [
+                    safe_int_str(
+                        week_total_value(
+                            weekly_grouped_data,
+                            pd.Timestamp(week_series[i]).strftime('%Y-%m-%d'),'COV'
+                        )
+                    )
+                    for i in range(len(week_series))
+                ]
+                temp_contractor = [
+                    safe_int_str(
+                        week_total_value(
+                            weekly_grouped_data,
+                            pd.Timestamp(week_series[i]).strftime('%Y-%m-%d'),'Contractor'
+                        )
+                    )
+                    for i in range(len(week_series))
+                ]
+                temp_linehaul = [
+                    safe_int_str(
+                        week_total_value(
+                            weekly_grouped_data, 
+                            pd.Timestamp(week_series[i]).strftime('%Y-%m-%d'), 'Linehaul'
+                        )
+                    )
+                    for i in range(len(week_series))
+                ]
+            else:
+                temp_cov = df_list[0][f'{cell_v}'].values if cell_v in df_list[0].columns else ['0 ' for _ in range(len(df_list[0]))]
+                temp_cov = [safe_int_str(x) for x in temp_cov]
 
-            temp_linehaul = df_list[2][f'{cell_v}'].values if cell_v in df_list[2].columns else ['0 ' for _ in range(len(df_list[0]))]
-            temp_linehaul = [safe_int_str(x) for x in temp_linehaul]
-            # temp_linehaul = ['0 ' if str(x).strip().lower() == 'nan' or (isinstance(x, float) and math.isnan(x)) else x for x in temp_linehaul]
+                temp_contractor = df_list[1][f'{cell_v}'].values if cell_v in df_list[1].columns else ['0 ' for _ in range(len(df_list[0]))]
+                temp_contractor = [safe_int_str(x) for x in temp_contractor]
+
+                temp_linehaul = df_list[2][f'{cell_v}'].values if cell_v in df_list[2].columns else ['0 ' for _ in range(len(df_list[0]))]
+                temp_linehaul = [safe_int_str(x) for x in temp_linehaul]
 
             temp_all = []
             for i in range(len(temp_cov)):
-                cov_val = int(str(temp_cov[i]).strip())
-                contractor_val = int(str(temp_contractor[i]).strip())
-                linehaul_val = int(str(temp_linehaul[i]).strip())
-                temp_total = cov_val + contractor_val + linehaul_val
-                past_total = int(str(temp_cov[i-1]).strip()) + int(str(temp_contractor[i-1]).strip()) + int(str(temp_linehaul[i-1]).strip())
+                if cell_v == 'Total':
+                    current_week_label = df_list[0]['week_label'][i]
+                    cov_val = int(str(temp_cov[i]).strip())
+                    contractor_val = int(str(temp_contractor[i]).strip())
+                    linehaul_val = int(str(temp_linehaul[i]).strip())
+                    temp_total = (
+                        week_total_value(weekly_grouped_data, current_week_label, 'COV') +
+                        week_total_value(weekly_grouped_data, current_week_label, 'Contractor') +
+                        week_total_value(weekly_grouped_data, current_week_label, 'Linehaul')
+                    )
+                    past_week_label = df_list[0]['week_label'][i-1] if i > 0 else None
+                    past_total = (
+                        week_total_value(weekly_grouped_data, past_week_label, 'COV') +
+                        week_total_value(weekly_grouped_data, past_week_label, 'Contractor') +
+                        week_total_value(weekly_grouped_data, past_week_label, 'Linehaul')
+                    )
+
+                else:
+                    cov_val = int(str(temp_cov[i]).strip())
+                    contractor_val = int(str(temp_contractor[i]).strip())
+                    linehaul_val = int(str(temp_linehaul[i]).strip())
+                    temp_total = cov_val + contractor_val + linehaul_val
+                    past_total = int(str(temp_cov[i-1]).strip()) + int(str(temp_contractor[i-1]).strip()) + int(str(temp_linehaul[i-1]).strip())
 
                 try:
                     if (past_total == 0) and (temp_total == 0):
@@ -121,6 +171,7 @@ def build_table_section(df_list, columns, weekly_grouped_data):
 
             cell_values.append(temp_all)
             cell_headers.append(f"<b>{cell_v}</b>")
+
     return cell_headers, cell_values
 
 def infractionsTotalsPerCategory_Table(weekly_grouped_data, fig, row_num, col_num):
