@@ -1,18 +1,22 @@
-import pandas as pd
 from plotly.subplots import make_subplots
-import datetime as dt
 
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from functions.chart_data_creation import overviewProgramPerformance_data, weeklyInfractionsTotalPerCategory_data, monthlyGroupPreformanceTable_data, covEventsAndIncidents_data, Pulling_SmartSheet_data
+from functions.chart_data_creation import weeklyInfractionsTotalPerCategory_data, monthlyGroupPreformanceTable_data
 
 from chart_plot_functions.categorical.infractionFrequencyCategory_chart import infractionFrequencyCategory_chart
 from chart_plot_functions.categorical.regionalGroupPerformanceWeekly_table import regionalGroupPerformanceWeekly_table
+from chart_plot_functions.categorical.infractionsTotalsPerCategory_Table import infractionsTotalsPerCategory_Table
+from chart_plot_functions.categorical.infractionFrequencyPerBehavior_chart import infractionFrequencyPerBehavior_chart
 
 
 from chart_plot_functions.program.regionalGroupPerformance_chart import regionalGroupPerformance_chart
+
+
+from chart_plot_functions.functions.add_annotation import add_annotation
+
 
 def categoricalResults_chart(ending_date_str):
 
@@ -65,14 +69,14 @@ def categoricalResults_chart(ending_date_str):
     # Chart: ROW 2, COL 2
     fig = regionalGroupPerformanceWeekly_table(regionGroupPerformance_table, weekly_total_data, fig, row_num=2, col_num=2)
 
+    fig = add_annotation(fig, x=0.50, y=0.82, text="<span style='text-decoration: underline; font-weight: bold; '>Infractions Totals and per Category</span>", textangle=0)
 
+    fig = infractionsTotalsPerCategory_Table(weekly_grouped_data, fig, row_num=3, col_num=1)
 
+    fig = add_annotation(fig, x=0.50, y=0.501, text="Infraction Frequency per Behavior", textangle=0) # font=dict(size=30, color='black'),
+    fig = add_annotation(fig, x=1.00, y=0.818, text="Legend: COV | Contractor | Linehaul", textangle=0) # font=dict(size=15, color='black'),
 
-
-
-
-
-
+    fig = infractionFrequencyPerBehavior_chart(weekly_grouped_data, fig, row_num=6, col_num=1)
 
 
     fig.update_layout(
@@ -86,4 +90,4 @@ def categoricalResults_chart(ending_date_str):
     fig.show()
 
 
-categoricalResults_chart("2025-05-23")
+categoricalResults_chart("2025-05-30")
