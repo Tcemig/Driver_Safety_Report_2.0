@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import pandas as pd
 
 import sys
 import os
@@ -9,6 +10,18 @@ from chart_data_functions.categorical.regionalGroupPerformanceWeekly_tableData i
 def regionalGroupPerformanceWeekly_table(regionGroupPerformance_table, weekly_total_data, fig, row_num, col_num):
 
     regionGroupPerformance_table, fill_color = regionalGroupPerformanceWeekly_tableData(regionGroupPerformance_table, weekly_total_data)
+
+    regionGroupPerformance_table = regionGroupPerformance_table.rename(columns={
+        'group': 'Group',
+        'group_size': 'Group Size',
+    })
+
+    for col in regionGroupPerformance_table.columns[2:]:
+        current_saturday = pd.to_datetime(col)
+        following_friday = current_saturday + pd.Timedelta(days=6)
+        date_text = f"{current_saturday.month:02d}-{current_saturday.day:02d} to {following_friday.month:02d}-{following_friday.day:02d}"
+        regionGroupPerformance_table.rename(columns={col: date_text}, inplace=True)
+
 
     cell_values = []
     cell_headers = []
