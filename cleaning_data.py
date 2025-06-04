@@ -4,7 +4,7 @@ import sqlite3
 import datetime as dt
 
 from LYTX_API.restAPI import pull_LYTX_eventsWithMetadata, pull_LYTX_vehicles, pull_LYTX_groups
-from LYTX_API.soupAPI import LYTX_Login_SOAPUI, LYTX_GetUsers_SOUPUI, LYTX_GetUsers_fromGroup_SOUPUI
+from LYTX_API.soupAPI import LYTX_Login_SOAPUI, LYTX_GetUsers_SOUPUI
 
 
 def cleaning_events_data(date_str):
@@ -84,9 +84,7 @@ def cleaning_events_data(date_str):
     conn.commit()
     conn.close()
 
-for date in pd.date_range(start='2024-10-01', end='2025-02-28'):
-    cleaning_events_data(date.strftime('%Y-%m-%d'))
-    print(f"Data for {date.strftime('%Y-%m-%d')} cleaned and inserted into the database.")
+
 
     
 
