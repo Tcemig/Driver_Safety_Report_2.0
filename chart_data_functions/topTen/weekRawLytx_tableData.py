@@ -1,6 +1,7 @@
 import datetime as dt
 import pandas as pd
 import json
+import numpy as np
 
 import sys
 import os
@@ -24,7 +25,7 @@ def rawLytxData(ending_date_str, behavior_list):
     if isinstance(df['recordDate'].dtype, pd.DatetimeTZDtype):
         df['recordDate'] = df['recordDate'].dt.tz_localize(None)
 
-    df = df[df['driverName'].notna()]
+    df['driverName'] = df['driverName'].fillna("Driver Unassigned")
     df = df[df['behaviorsName'].notna()]
     df = df[df['behaviorsName'] != '']
     df = df[df['behaviorsName'].str.lower().isin([b.lower() for b in behavior_list])]

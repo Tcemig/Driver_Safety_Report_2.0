@@ -36,6 +36,7 @@ def weekRawLytx_table(ending_date_str, behavior_list, return_fig, fig=None):
             
             fig.add_trace(
                 go.Table(
+                    columnwidth=[90, 150, 60],  # Adjust column widths as needed
                     header=dict(
                         values=["Vehicle".title(), "Driver".title(), "Count".title()],  # Title case for headers
                         align="center",  # Center-align header text
