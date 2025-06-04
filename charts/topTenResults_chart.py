@@ -48,17 +48,18 @@ def topTen_Tables(ending_date_str):
     fig = weekRawLytx_table(ending_date_str, behavior_list, return_fig=True, fig=fig)
 
     fig.update_layout(
-        height=2500,
+        height=1900,
         width=1800,
         title=dict(
-            text=f"Top 10 Behaviors by Vehicle From LYTX: {ending_date_str} - {ending_date_str}",
+            text=f"Top 10 Behaviors by Vehicle From LYTX: {(dt.datetime.strptime(ending_date_str, '%Y-%m-%d') - dt.timedelta(days=6)).strftime('%Y-%m-%d')} - {ending_date_str}",
             font=dict(size=24)  # Adjust the font size here
         ),
         showlegend=False,
     )
     fig.show()
 
-topTen_Tables("2025-05-09")
+    fig.write_html(f"created_charts/topTenLytx.html", include_plotlyjs="cdn")
+
 
 
 

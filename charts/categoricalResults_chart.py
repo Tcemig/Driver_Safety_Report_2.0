@@ -1,4 +1,5 @@
 from plotly.subplots import make_subplots
+import datetime as dt
 
 import sys
 import os
@@ -83,11 +84,11 @@ def categoricalResults_chart(ending_date_str):
         # showlegend=False,
         height= 3200,
         width=1850,
-        title_text=f"<span style='font-size: 24px; font-weight: bold; color: black;'>LYTX Categorical Results Week: </span>",
+        title_text=f"<span style='font-size: 24px; font-weight: bold; color: black;'>LYTX Categorical Results Week: {(dt.datetime.strptime(ending_date_str, '%Y-%m-%d') - dt.timedelta(days=6)).strftime('%Y-%m-%d')} - {ending_date_str}</span>",
 
     )
 
     fig.show()
 
+    fig.write_html(f"created_charts/categoricalLytx.html", include_plotlyjs="cdn")
 
-categoricalResults_chart("2025-05-30")

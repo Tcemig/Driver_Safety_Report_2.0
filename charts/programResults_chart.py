@@ -192,7 +192,7 @@ def programResults_chart(ending_date_str):
         showlegend=False,
         height= 3200,
         width=1850,
-        title_text=f"<span style='font-size: 24px; font-weight: bold; color: black;'>LYTX Program Results Week: {pulling_week_label(0)} {(dt.datetime.strptime(pulling_week_label(0), '%Y-%m-%d') + dt.timedelta(days=7)).strftime('%Y-%m-%d')}</span>",        
+        title_text=f"<span style='font-size: 24px; font-weight: bold; color: black;'>LYTX Program Results Week: {pulling_week_label(0)} {(dt.datetime.strptime(pulling_week_label(0), '%Y-%m-%d') + dt.timedelta(days=6)).strftime('%Y-%m-%d')}</span>",        
         # Overview of Program Performance - Frequency
         xaxis= dict(domain= [0.0, 1.0]),
         yaxis= dict(domain= [0.85, 0.998]),
@@ -246,7 +246,7 @@ def programResults_chart(ending_date_str):
         )
     fig.show()
 
+    fig.write_html(f"created_charts/programLytx.html", include_plotlyjs="cdn")
 
 
-programResults_chart(ending_date_str='2025-05-30')
 
