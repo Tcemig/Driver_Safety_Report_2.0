@@ -275,6 +275,3 @@ def Pulling_SmartSheet_data():
     df = df[df['Vehicle Type'].str.contains('COV', na=False)]
 
     return df
-
-
-
