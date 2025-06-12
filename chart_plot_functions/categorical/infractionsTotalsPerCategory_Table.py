@@ -82,6 +82,8 @@ def build_table_section(df_list, columns, weekly_grouped_data):
 
                 temp_contractor = df_list[1][f'{cell_v}'].values if cell_v in df_list[1].columns else ['0 ' for _ in range(len(df_list[0]))]
                 temp_contractor = [safe_int_str(x) for x in temp_contractor]
+                if len(temp_contractor) < len(temp_cov):
+                    temp_contractor += ['0 ' for _ in range(len(temp_cov) - len(temp_contractor))]
 
                 temp_linehaul = df_list[2][f'{cell_v}'].values if cell_v in df_list[2].columns else ['0 ' for _ in range(len(df_list[0]))]
                 temp_linehaul = [safe_int_str(x) for x in temp_linehaul]
