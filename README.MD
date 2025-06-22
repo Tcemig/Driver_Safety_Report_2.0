@@ -64,3 +64,5 @@ This project generates weekly reports and interactive charts from LYTX data, inc
 ---
 
 For more details, see the individual scripts and modules.
+
+* All data has been randomized from original values *
